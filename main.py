@@ -34,33 +34,45 @@ def classify(user_input):  # classify the input as ppt , image based on the keyw
 
     for word in words:  # Checking for keywords and return the category
         if word in keywords:
-            return user_input, keywords[word]
+            return keywords[word]
 
     formality_result = classify_formality(user_input)  # here, if no keyword is found it just performs sentimental analysis
-    return f'Formality:{formality_result}'
+    return f'text'
+
 
 
 @app.post('/classify')  # This line defines a new route in your FastAPI application using a decorator.
 async def classify_input(request: Request):  # asynchronous function that takes a single parameter - request.
     data = await request.json() # awaits the completion of the asynchronous request.json() method.
-    user_input = data['user_input']  # Assuming the user input is sent as JSON object
+    user_input = data['inputText']  # Assuming the user input is sent as JSON object
+    emailId=data["emailId"]
     result = classify(user_input)  # function call-> classify the user input
+    if result == "text":
+        result='0'
+    elif result == "Article":
+        result='1'
+    elif result == "Presentation":
+        result='2'
+
     sentiment_result = classify_formality(user_input)  # function call, sentimental analysis result
-    send_email(user_input, result, sentiment_result)  # function call sending the email
+
+    send_email(user_input, emailId,result, sentiment_result)  # function call sending the email
     return JSONResponse(content={'classification': result, 'sentiment': sentiment_result})  # This line constructs and returns a JSON response using the JSONResponse class
 
-
-def send_email(user_input, result, sentiment_result):  # fun def and the information required for sending mail
-    subject = "Classification and Sentimental Analysis result"
-    body = f"User Input:{user_input,}\nClassification:{result,}\nSentimental Analysis: {sentiment_result}"
+def send_email(user_input, emailId,result, sentiment_result):  # fun def and the information required for sending mail
+    subject = emailId
+    if result!=0:
+        body = f"{result}{user_input} in {sentiment_result} tone"
+    else:
+        body = f"{result}{user_input}"
     sender_email = "infinimindai@gmail.com"
-    receiver_email = "infinimindai@gmail.com"
+    receiver_email = "thehackash@outlook.com"
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    smtp_username = "infinimindai@gmail.com"
+    smtp_username = "inifinimindai@gmail.com"
     smtp_password = "aahdkcpnebnsghrh"
 
-    message = MIMEText(body)  # These lines create an instance of mimetext with the body as the email content and sets the subject, from, to.
+    message = MIMEText(body)  # These lines create an ins tance of mimetext with the body as the email content and sets the subject, from, to.
     message['Subject'] = subject
     message['From'] = sender_email
     message['To'] = receiver_email
